@@ -19,6 +19,8 @@ jobs:
       run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
     - name: Build
       run: cmake --build build --config Release
+    - name: List build directory
+      run: ls -R build
     - name: Upload artifact
       uses: actions/upload-artifact@v4 # Corrected indentation
       with:
@@ -35,8 +37,10 @@ jobs:
       run: cmake -S . -B build -DCMAKE_BUILD_TYPE=${{ env.BUILD_CONFIG }}
     - name: Build
       run: cmake --build build --config ${{ env.BUILD_CONFIG }}
+     - name: List build directory
+       run: ls -R build
     - name: Upload artifact
       uses: actions/upload-artifact@v4 # Corrected indentation
       with:
         name: my_project_windows
-        path: build/${{ env.BUILD_CONFIG }}/my_project.exe
+        path: build/my_project.exe # Corrected path
