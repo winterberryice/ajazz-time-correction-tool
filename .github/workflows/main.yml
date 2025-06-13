@@ -20,7 +20,7 @@ jobs:
     - name: Build
       run: cmake --build build --config Release
     - name: Upload artifact
-      uses: actions/upload-artifact@v3
+       uses: actions/upload-artifact@v4
       with:
         name: my_project_ubuntu
         path: build/my_project
@@ -36,7 +36,7 @@ jobs:
     - name: Build
       run: cmake --build build --config ${{ env.BUILD_CONFIG }}
     - name: Upload artifact
-      uses: actions/upload-artifact@v3
+       uses: actions/upload-artifact@v4
       with:
         name: my_project_windows
         path: build/${{ env.BUILD_CONFIG }}/my_project.exe
