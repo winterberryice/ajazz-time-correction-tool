@@ -31,14 +31,47 @@ jobs:
       BUILD_CONFIG: Release # Define an environment variable for build configuration
     steps:
     - uses: actions/checkout@v3
-    - name: Configure CMake
-      run: cmake -S . -B build -DCMAKE_BUILD_TYPE=${{ env.BUILD_CONFIG }}
-    - name: Build
+
+    - name: Set up MSVC Developer Command Prompt
+      uses: ilammy/msvc-dev-cmd@v1
+
+    - name: Checkout hidapi
+      uses: actions/checkout@v3
+      with:
+        repository: libusb/hidapi
+        path: hidapi_source
+
+    - name: Build hidapi
+      shell: cmd
+      run: |
+        cd hidapi_source
+        mkdir build
+        cd build
+        cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=${{ env.BUILD_CONFIG }}
+        nmake
+        cd ..
+        echo "HIDAPI_INCLUDE_DIR=${{ github.workspace }}\hidapi_source\hidapi" >> %GITHUB_ENV%
+        echo "HIDAPI_LIBRARY_DIR=${{ github.workspace }}\hidapi_source\build\${{ env.BUILD_CONFIG }}" >> %GITHUB_ENV%
+        echo "HIDAPI_DLL_PATH=${{ github.workspace }}\hidapi_source\build\${{ env.BUILD_CONFIG }}\hidapi.dll" >> %GITHUB_ENV%
+
+    - name: Configure CMake for main project
+      run: cmake -S . -B build -DCMAKE_BUILD_TYPE=${{ env.BUILD_CONFIG }} -DHIDAPI_INCLUDE_DIR="${{ env.HIDAPI_INCLUDE_DIR }}" -DHIDAPI_LIBRARY_DIR="${{ env.HIDAPI_LIBRARY_DIR }}" -DUSE_BUNDLED_HIDAPI=OFF
+
+    - name: Build main project
       run: cmake --build build --config ${{ env.BUILD_CONFIG }}
+
     - name: List build directory
       run: ls -R build
+
+    - name: Prepare artifact
+      shell: bash
+      run: |
+        mkdir -p artifact
+        cp build/${{ env.BUILD_CONFIG }}/ajazz_time_correction_tool.exe artifact/
+        cp "${{ env.HIDAPI_DLL_PATH }}" artifact/
+
     - name: Upload artifact
-      uses: actions/upload-artifact@v4 # Corrected indentation
+      uses: actions/upload-artifact@v4
       with:
-         name: ajazz_time_correction_tool_windows # Corrected artifact name
-         path: build/Release/ajazz_time_correction_tool.exe # Corrected artifact path
+        name: ajazz_time_correction_tool_windows_with_hidapi
+        path: artifact/
