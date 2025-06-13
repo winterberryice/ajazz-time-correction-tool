@@ -19,13 +19,11 @@ jobs:
       run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
     - name: Build
       run: cmake --build build --config Release
-    - name: List build directory
-      run: ls -R build
     - name: Upload artifact
       uses: actions/upload-artifact@v4 # Corrected indentation
       with:
-        name: my_project_ubuntu
-        path: build/my_project
+         name: ajazz_time_correction_tool_ubuntu # Corrected artifact name
+         path: build/ajazz_time_correction_tool    # Corrected artifact path
 
   build_windows:
     runs-on: windows-latest
@@ -37,10 +35,10 @@ jobs:
       run: cmake -S . -B build -DCMAKE_BUILD_TYPE=${{ env.BUILD_CONFIG }}
     - name: Build
       run: cmake --build build --config ${{ env.BUILD_CONFIG }}
-    - name: List build directory
-      run: ls -R build
+     - name: List build directory
+       run: ls -R build
     - name: Upload artifact
       uses: actions/upload-artifact@v4 # Corrected indentation
       with:
-        name: my_project_windows
-        path: build/my_project.exe # Corrected path
+         name: ajazz_time_correction_tool_windows # Corrected artifact name
+         path: build/Release/ajazz_time_correction_tool.exe # Corrected artifact path
