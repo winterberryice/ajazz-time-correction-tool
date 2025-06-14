@@ -54,6 +54,13 @@ jobs:
         echo "HIDAPI_LIBRARY_DIR=${{ github.workspace }}\hidapi_source\build\${{ env.BUILD_CONFIG }}" >> %GITHUB_ENV%
         echo "HIDAPI_DLL_PATH=${{ github.workspace }}\hidapi_source\build\${{ env.BUILD_CONFIG }}\hidapi.dll" >> %GITHUB_ENV%
 
+    - name: Display HIDAPI ENV Vars
+      shell: bash # Using bash for echo consistency, works on Windows runners too
+      run: |
+        echo "HIDAPI_INCLUDE_DIR is: ${{ env.HIDAPI_INCLUDE_DIR }}"
+        echo "HIDAPI_LIBRARY_DIR is: ${{ env.HIDAPI_LIBRARY_DIR }}"
+        echo "HIDAPI_DLL_PATH is: ${{ env.HIDAPI_DLL_PATH }}" # Also display this for good measure
+
     - name: Configure CMake for main project
       run: cmake -S . -B build -DCMAKE_BUILD_TYPE=${{ env.BUILD_CONFIG }} -DHIDAPI_INCLUDE_DIR="${{ env.HIDAPI_INCLUDE_DIR }}" -DHIDAPI_LIBRARY_DIR="${{ env.HIDAPI_LIBRARY_DIR }}" -DUSE_BUNDLED_HIDAPI=OFF
 

@@ -9,7 +9,7 @@ add_executable(ajazz_time_correction_tool main.cpp)
 
 # --- HIDAPI Linking ---
 # Check if HIDAPI paths are explicitly provided as CMake variables (e.g., by CI via -D options)
-if(HIDAPI_INCLUDE_DIR AND HIDAPI_LIBRARY_DIR)
+if(DEFINED HIDAPI_INCLUDE_DIR AND NOT "${HIDAPI_INCLUDE_DIR}" STREQUAL "" AND DEFINED HIDAPI_LIBRARY_DIR AND NOT "${HIDAPI_LIBRARY_DIR}" STREQUAL "")
     message(STATUS "Using HIDAPI from CMake variables:")
     message(STATUS "  HIDAPI_INCLUDE_DIR: ${HIDAPI_INCLUDE_DIR}")
     message(STATUS "  HIDAPI_LIBRARY_DIR: ${HIDAPI_LIBRARY_DIR}")
