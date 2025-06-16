@@ -1,6 +1,7 @@
 # Zig compilation artifacts
 zig-cache/
 zig-out/
+.zig-cache/
 
 # Local ZLS data
 .zls-cache/
