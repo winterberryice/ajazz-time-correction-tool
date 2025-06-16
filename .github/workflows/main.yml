@@ -12,11 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-
-    - name: Set up Zig (0.11.0)
-      uses: mlugg/setup-zig@v1
-      with:
-        version: "0.11.0"
+    - uses: mlugg/setup-zig@v2
 
     # Build for Linux (native)
     - name: Build executable (Linux)
