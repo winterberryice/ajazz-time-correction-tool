@@ -2,32 +2,43 @@ name: Zig CI
 
 on:
   push:
-    branches: [ zig ] # Changed from main to zig
+    branches: [ zig ]
   pull_request:
-    branches: [ zig ] # Changed from main to zig
+    branches: [ zig ]
 
 jobs:
-  build_zig_executables:
+  build_all_platforms:
+    name: Build on Ubuntu (Linux & Windows targets)
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
 
-    - name: Set up Zig (latest)
+    - name: Set up Zig (0.11.0)
       uses: goto-bus-stop/setup-zig@v2
       with:
-        version: latest # Specify latest version
+        version: "0.11.0"
 
-    - name: Build executables
+    # Build for Linux (native)
+    - name: Build executable (Linux)
       run: zig build
+      # Output will be in zig-out/bin/app
 
-    - name: Upload hello executable
+    - name: Upload executable (Linux)
       uses: actions/upload-artifact@v4
       with:
-        name: hello_executable_ubuntu
-        path: zig-out/bin/hello
+        name: app-linux
+        path: zig-out/bin/app
 
-    - name: Upload hello2 executable
+    # Build for Windows (cross-compilation)
+    - name: Clean previous build (for Windows target)
+      run: rm -rf zig-out zig-cache
+
+    - name: Build executable (Windows x64)
+      run: zig build -Dtarget=x86_64-windows-gnu
+      # Output will be in zig-out/bin/app.exe
+
+    - name: Upload executable (Windows)
       uses: actions/upload-artifact@v4
       with:
-        name: hello2_executable_ubuntu
-        path: zig-out/bin/hello2
+        name: app-windows
+        path: zig-out/bin/app.exe
