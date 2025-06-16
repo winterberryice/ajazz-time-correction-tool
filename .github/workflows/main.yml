@@ -14,10 +14,29 @@ jobs:
     - uses: actions/checkout@v3
     - uses: mlugg/setup-zig@v2
 
+    # Install hidapi for Linux
+    - name: Install hidapi dependencies and build tools
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libudev-dev libusb-1.0-0-dev pkg-config autoconf automake libtool
+    - name: Clone hidapi repository
+      run: git clone https://github.com/libusb/hidapi.git hidapi_src
+    - name: Build and install hidapi
+      run: |
+        cd hidapi_src
+        ./bootstrap
+        ./configure --prefix=$GITHUB_WORKSPACE/hidapi_install CFLAGS="-fPIC"
+        make
+        make install
+        cd ..
+
     # Build for Linux (native)
     - name: Build executable (Linux)
       run: zig build
       # Output will be in zig-out/bin/app
+
+    - name: Run HID device lister
+      run: ./zig-out/bin/app
 
     - name: Upload executable (Linux)
       uses: actions/upload-artifact@v4
