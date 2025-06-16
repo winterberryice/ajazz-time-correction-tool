@@ -1,1 +1,0 @@
-# ajazz-time-correction-tool

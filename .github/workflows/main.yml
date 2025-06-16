@@ -1,44 +1,33 @@
-name: C++ CI
+name: Zig CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [ zig ] # Changed from main to zig
   pull_request:
-    branches: [ main ]
+    branches: [ zig ] # Changed from main to zig
 
 jobs:
-  build_ubuntu:
-    runs-on: ubuntu-22.04 # Changed from ubuntu-latest
+  build_zig_executables:
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-    - name: Install dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y cmake g++
-    - name: Configure CMake
-      run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXE_LINKER_FLAGS="-static-libstdc++"
-    - name: Build
-      run: cmake --build build --config Release
-    - name: Upload artifact
-      uses: actions/upload-artifact@v4 # Corrected indentation
-      with:
-         name: ajazz_time_correction_tool_ubuntu # Corrected artifact name
-         path: build/ajazz_time_correction_tool    # Corrected artifact path
 
-  build_windows:
-    runs-on: windows-latest
-    env:
-      BUILD_CONFIG: Release # Define an environment variable for build configuration
-    steps:
-    - uses: actions/checkout@v3
-    - name: Configure CMake
-      run: cmake -S . -B build -DCMAKE_BUILD_TYPE=${{ env.BUILD_CONFIG }}
-    - name: Build
-      run: cmake --build build --config ${{ env.BUILD_CONFIG }}
-    - name: List build directory
-      run: ls -R build
-    - name: Upload artifact
-      uses: actions/upload-artifact@v4 # Corrected indentation
+    - name: Set up Zig (latest)
+      uses: goto-bus-stop/setup-zig@v2
       with:
-         name: ajazz_time_correction_tool_windows # Corrected artifact name
-         path: build/Release/ajazz_time_correction_tool.exe # Corrected artifact path
+        version: latest # Specify latest version
+
+    - name: Build executables
+      run: zig build
+
+    - name: Upload hello executable
+      uses: actions/upload-artifact@v4
+      with:
+        name: hello_executable_ubuntu
+        path: zig-out/bin/hello
+
+    - name: Upload hello2 executable
+      uses: actions/upload-artifact@v4
+      with:
+        name: hello2_executable_ubuntu
+        path: zig-out/bin/hello2

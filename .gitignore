@@ -1,98 +1,14 @@
-# Prerequisites
-*.d
+# Zig compilation artifacts
+zig-cache/
+zig-out/
 
-# Compiled Object files
-*.slo
-*.lo
-*.o
-*.obj
+# Local ZLS data
+.zls-cache/
+zls.json
+zls.json.lock
 
-# Precompiled Headers
-*.gch
-*.pch
-
-# Compiled Dynamic libraries
-*.so
-*.dylib
-*.dll
-
-# Fortran module files
-*.mod
-*.smod
-
-# Compiled Static libraries
-*.lai
-*.la
-*.a
-*.lib
-
-# Executables
-*.exe
-*.out
-*.app
-
-###
-# ===================================================================
-#  CMake build artifacts
-#
-#  This assumes you are using an out-of-source build, e.g.,
-#  mkdir build && cd build && cmake ..
-# ===================================================================
-build/
-build/
-Bin/
-Lib/
-*.build/
-
-# CMake generated files for in-source builds (bad practice, but good to have)
-CMakeCache.txt
-CMakeFiles/
-CMakeScripts/
-cmake_install.cmake
-CTestTestfile.cmake
-Makefile
-install_manifest.txt
-compile_commands.json
-
-# ===================================================================
-#  IDE and Editor configuration files
-# ===================================================================
-
-# Visual Studio Code
+# IDE/editor specific files
 .vscode/
-
-# Visual Studio
-.vs/
-*.sln.dotsettings
-*.suo
-*.user
-*.vcxproj.user
-
-# CLion
 .idea/
-
-# =ax =================================================================
-#  Common compiled object files, libraries, and executables
-# ===================================================================
-*.a
-*.lib
-*.so
-*.dll
-*.exe
-*.obj
-*.o
-*.pdb
-*.ilk
-
-# ===================================================================
-#  Operating System specific files
-# ===================================================================
-
-# macOS
-.DS_Store
-
-# Linux
-*~
-
-# Windows
-Thumbs.db
+*.swp
+*.swo
