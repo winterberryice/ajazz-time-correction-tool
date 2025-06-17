@@ -1,0 +1,70 @@
+# .github/workflows/build.yml
+
+name: Build Application
+
+# Controls when the action will run.
+# Runs on pushes to the main branch and on pull requests.
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  # --- Job to build the Linux executable ---
+  build-linux:
+    name: Build for Linux
+    # Use the latest Ubuntu runner provided by GitHub
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Check out your repository's code
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      # 2. Install Linux dependencies for hidapi
+      - name: Install Linux dependencies
+        run: sudo apt-get update && sudo apt-get install -y libudev-dev pkg-config
+
+      # 3. Set up the Rust toolchain
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      # 4. Build the application in release mode for performance
+      - name: Build release executable
+        run: cargo build --release --verbose
+
+      # 5. Upload the compiled executable as an artifact
+      - name: Upload Linux artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ajazz-time-correction-tool-linux-x86_64
+          path: target/release/ajazz-time-correction-tool
+
+  # --- Job to build the Windows executable ---
+  build-windows:
+    name: Build for Windows
+    # Use the latest Windows runner provided by GitHub
+    runs-on: windows-latest
+
+    steps:
+      # 1. Check out your repository's code
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      # 2. Set up the Rust toolchain
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      # NOTE: No dependency installation needed here! The 'hidapi' crate handles it.
+
+      # 3. Build the application in release mode
+      - name: Build release executable
+        run: cargo build --release --verbose
+
+      # 4. Upload the compiled executable as an artifact
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ajazz-time-correction-tool-windows-x86_64
+          path: target/release/ajazz-time-correction-tool.exe
