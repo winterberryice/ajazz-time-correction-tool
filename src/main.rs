@@ -57,38 +57,26 @@ fn run_app() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-/// Creates the time-sync payload and sends it to the provided device.
-/// THIS VERSION IS MODIFIED FOR TESTING: It always sends the time 12:12:00.
+/// Creates and sends a hardcoded, known-good payload for testing.
 fn sync_time(device: &HidDevice) -> Result<(), Box<dyn Error>> {
-    println!("Preparing to send test command (time: 12:12:00)...");
+    println!("Sending a hardcoded, known-good command from the original capture...");
 
-    // Create a 65-byte buffer, initialized to all zeros
-    let mut payload = vec![0u8; 65];
-    let now = Local::now(); // We still use this to get the correct date
+    // This is a byte-for-byte copy of the successful Wireshark capture.
+    // The payload sets the time to June 11, 2025, 09:36:58.
+    let payload: [u8; 65] = [
+        0x00, 0x01, 0x5A, 0x19, 0x06, 0x0B, 0x09, 0x24, 0x3A, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xAA,
+        0x55
+    ];
 
-    // This is the "secret recipe" we discovered
-    payload[0] = 0x00; // Report ID
-    payload[1] = 0x01; // Command Prefix
-    payload[2] = 0x5A; // Command ID for "Set Time"
+    // Send the command and handle potential errors.
+    // Note we pass it as a slice `&payload[..]`
+    device.send_feature_report(&payload[..])?;
 
-    // --- Date (from current system time) ---
-    payload[3] = (now.year() % 100) as u8;
-    payload[4] = now.month() as u8;
-    payload[5] = now.day() as u8;
-
-    // --- Time (HARDCODED FOR TESTING) ---
-    payload[6] = 12; // Hour
-    payload[7] = 12; // Minute
-    payload[8] = 00; // Second
-
-    // Magic number/checksum at the end
-    payload[63] = 0xAA;
-    payload[64] = 0x55;
-
-    // Send the command and handle potential errors
-    device.send_feature_report(&payload)?;
-
-    println!("\nSUCCESS: The test command was sent to the keyboard!");
+    println!("\nSUCCESS: The known-good command was sent to the keyboard!");
+    println!("Please check if the keyboard's time is now set to June 11, 2025, 09:36.");
 
     Ok(())
 }
