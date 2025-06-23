@@ -16,43 +16,44 @@ fn main() {
     }
 }
 
-/// Contains the main application flow, with corrected device finding logic.
+/// This version finds ALL matching device interfaces and tries to send the command to each one.
 fn run_app() -> Result<(), Box<dyn Error>> {
     let api = HidApi::new()?;
 
-    // 1. Find the Keyboard using the CORRECT, specific identifiers
-    // The key change is here. We now match VID, PID, and the Interface Number.
-    let device_info = api
+    // 1. Find ALL interfaces that match the VID/PID
+    let device_interfaces: Vec<_> = api
         .device_list()
-        .find(|d| {
-            d.vendor_id() == TARGET_VID
-                && d.product_id() == TARGET_PID
-                && d.interface_number() == TARGET_INTERFACE
-        })
-        .ok_or_else(|| {
-            format!(
-                "Could not find target device (VID={:04x}, PID={:04x}, Interface={})",
-                TARGET_VID, TARGET_PID, TARGET_INTERFACE
-            )
-        })?;
+        .filter(|d| d.vendor_id() == TARGET_VID && d.product_id() == TARGET_PID)
+        .collect();
 
-    println!(
-        "Found target device interface: {} (VID: {:04x}, PID: {:04x})",
-        device_info.product_string().unwrap_or("Unknown"),
-        device_info.vendor_id(),
-        device_info.product_id()
-    );
+    if device_interfaces.is_empty() {
+        return Err(format!(
+            "No device found with VID={:04x}, PID={:04x}",
+            TARGET_VID, TARGET_PID
+        ).into());
+    }
 
-    // 2. Open the device
-    let device = device_info.open_device(&api).map_err(|e| {
-        format!(
-            "Failed to open device: {}. On Linux, try running with 'sudo'.",
-            e
-        )
-    })?;
+    println!("Found {} matching device interface(s). Testing each one...", device_interfaces.len());
+    let mut success = false;
 
-    // 3. Create and send the command
-    sync_time(&device)?;
+    // 2. Loop through each found interface
+    for device_info in device_interfaces {
+        println!("\n--- Testing Interface #{} ---", device_info.interface_number());
+        
+        match device_info.open_device(&api) {
+            Ok(device) => {
+                // 3. Try to send the command
+                if sync_time(&device).is_ok() {
+                    success = true; // Mark that at least one command sent successfully
+                }
+            }
+            Err(e) => eprintln!("  Could not open interface: {}", e),
+        }
+    }
+
+    if !success {
+         return Err("Sent command to all interfaces, but none succeeded.".into());
+    }
 
     Ok(())
 }
