@@ -49,25 +49,34 @@ fn run_app() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-/// Final version: Uses `device.write()` with a 64-byte payload.
+/// This version tests the "Double Zero" hypothesis, where the data payload
+/// itself starts with 0x00.
 fn sync_time(device: &HidDevice) -> Result<(), Box<dyn Error>> {
-    println!("Sending command with device.write() and 64-byte payload...");
+    println!("Testing command with a 'double zero' payload structure...");
 
-    let payload: [u8; 64] = [
-        0x00, 0x01, 0x5A, 0x19, 0x06, 0x0B, 0x09, 0x24, 0x3A, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    // This is the new, corrected payload based on your observation.
+    // The buffer is 65 bytes long.
+    let payload: [u8; 65] = [
+        // The FIRST zero is the Report ID, consumed by hidapi
+        0x00, 
+        
+        // The SECOND zero is the first byte of the 64-byte data fragment
+        0x00, 
+        
+        // The rest of the known-good command
+        0x01, 0x5A, 0x19, 0x06, 0x0B, 0x09, 0x24, 0x3A, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xAA, 0x55
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xAA,
+        0x55
     ];
 
-    // --- The Critical Change ---
-    // We use `device.write()` and pass a 64-byte slice that skips the leading Report ID.
-    // This exactly matches the length and likely command type from the capture.
-    //device.write(&payload[..])?;
-    device.send_feature_report(&payload[..])?;
+    // We send the entire 65-byte buffer. hidapi will use payload[0] as the Report ID
+    // and send the remaining 64 bytes (which now correctly start with 0x00) as the data.
+    device.send_feature_report(&payload)?;
 
-    println!("\nSUCCESS: The 64-byte write() command was sent to the keyboard!");
-    println!("Please check if the keyboard's time is now set to June 11, 2025, 09:36.");
+    println!("\nSUCCESS: The corrected 'double zero' command was sent!");
+    println!("Please check the keyboard's time.");
 
     Ok(())
 }
