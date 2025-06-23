@@ -2,82 +2,80 @@ use chrono::prelude::*;
 use hidapi::{HidApi, HidDevice};
 use std::error::Error;
 
-// --- Constants ---
-const AJAZZ_VID: u16 = 0x1E7D;
+// --- Confirmed Constants ---
+const TARGET_VID: u16 = 0x0c45;
+const TARGET_PID: u16 = 0x8009;
+const TARGET_INTERFACE: i32 = 3;
 
 // --- Main Application Entry Point ---
 
 fn main() {
     println!("Attempting to sync time with Ajazz keyboard...");
-
-    // Run the core application logic and print any error that bubbles up.
     if let Err(e) = run_app() {
         eprintln!("\nAn error occurred: {}", e);
     }
 }
 
-/// Contains the main application flow, returning a Result for robust error handling.
+/// Final version: Finds the specific, correct interface.
 fn run_app() -> Result<(), Box<dyn Error>> {
     let api = HidApi::new()?;
 
-    // 1. Find the Keyboard
-    // Find the first device that matches the Ajazz Vendor ID.
-    // .ok_or_else() converts the Option into a Result, providing a nice error message if None.
     let device_info = api
         .device_list()
-        .find(|d| d.vendor_id() == AJAZZ_VID)
-        .ok_or_else(|| format!("No compatible Ajazz keyboard found (VID: {:04x})", AJAZZ_VID))?;
+        .find(|d| {
+            d.vendor_id() == TARGET_VID
+                && d.product_id() == TARGET_PID
+                && d.interface_number() == TARGET_INTERFACE
+        })
+        .ok_or_else(|| {
+            format!(
+                "Could not find target device (VID={:04x}, PID={:04x}, Interface={})",
+                TARGET_VID, TARGET_PID, TARGET_INTERFACE
+            )
+        })?;
 
     println!(
-        "Found device: {} (VID: {:04x}, PID: {:04x})",
+        "Found target device interface: {} (VID: {:04x}, PID: {:04x})",
         device_info.product_string().unwrap_or("Unknown"),
         device_info.vendor_id(),
         device_info.product_id()
     );
-
-    // 2. Open the device
-    // .map_err() allows us to add context to the error message.
-    let device = device_info.open_device(&api).map_err(|e| {
-        format!(
-            "Failed to open device: {}. On Linux, try running with 'sudo'.",
-            e
-        )
-    })?;
-
-    // 3. Create and send the command
+    
+    let device = device_info.open_device(&api)?;
+    
+    // Call the sync function which now uses the correct command type and payload length
     sync_time(&device)?;
 
     Ok(())
 }
 
-/// Creates the time-sync payload and sends it to the provided device.
+/// This version tests the "Double Zero" hypothesis, where the data payload
+/// itself starts with 0x00.
 fn sync_time(device: &HidDevice) -> Result<(), Box<dyn Error>> {
-    println!("Preparing to send time-sync command...");
+    println!("Testing command with a 'double zero' payload structure...");
 
-    // Create a 65-byte buffer, initialized to all zeros
-    let mut payload = vec![0u8; 65];
-    let now = Local::now();
+    // This is the new, corrected payload based on your observation.
+    // The buffer is 65 bytes long.
+    let payload: [u8; 65] = [
+        // The FIRST zero is the Report ID, consumed by hidapi
+        0x00, 
+        
+        // The SECOND zero is the first byte of the 64-byte data fragment
+        0x00, 
+        
+        // The rest of the known-good command
+        0x01, 0x5A, 0x19, 0x06, 0x0B, 0x09, 0x24, 0x3A, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xAA, 0x55
+    ];
 
-    // This is the "secret recipe" we discovered
-    payload[0] = 0x00; // Report ID
-    payload[1] = 0x01; // Command Prefix
-    payload[2] = 0x5A; // Command ID for "Set Time"
-
-    payload[3] = (now.year() % 100) as u8;
-    payload[4] = now.month() as u8;
-    payload[5] = now.day() as u8;
-    payload[6] = now.hour() as u8;
-    payload[7] = now.minute() as u8;
-    payload[8] = now.second() as u8;
-
-    // Magic number/checksum at the end
-    payload[63] = 0xAA;
-    payload[64] = 0x55;
-
-    // Send the command and handle potential errors
+    // We send the entire 65-byte buffer. hidapi will use payload[0] as the Report ID
+    // and send the remaining 64 bytes (which now correctly start with 0x00) as the data.
     device.send_feature_report(&payload)?;
 
-    println!("\nSUCCESS: The time-sync command was sent to the keyboard!");
+    println!("\nSUCCESS: The corrected 'double zero' command was sent!");
+    println!("Please check the keyboard's time.");
 
     Ok(())
 }
