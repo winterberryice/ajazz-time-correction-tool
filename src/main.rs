@@ -63,7 +63,8 @@ fn sync_time(device: &HidDevice) -> Result<(), Box<dyn Error>> {
     // --- The Critical Change ---
     // We use `device.write()` and pass a 64-byte slice that skips the leading Report ID.
     // This exactly matches the length and likely command type from the capture.
-    device.write(&payload[..])?;
+    //device.write(&payload[..])?;
+    device.send_feature_report(&payload[..])?;
 
     println!("\nSUCCESS: The 64-byte write() command was sent to the keyboard!");
     println!("Please check if the keyboard's time is now set to June 11, 2025, 09:36.");
